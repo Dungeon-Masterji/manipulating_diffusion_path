@@ -1,0 +1,22 @@
+# MDP Interactive Playground — Mac Edition
+# Python 3.10+ required
+
+# Core ML
+torch>=2.1.0
+torchvision>=0.16.0
+
+# HuggingFace
+diffusers>=0.25.0
+transformers>=4.36.0
+accelerate>=0.25.0
+
+# UI
+gradio>=4.10.0
+
+# Image processing
+Pillow>=10.0.0
+numpy>=1.24.0
+
+# Utilities
+huggingface_hub>=0.20.0
+safetensors>=0.4.0
