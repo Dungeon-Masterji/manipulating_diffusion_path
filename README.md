@@ -1,136 +1,73 @@
-# MDP Interactive Playground — Mac Edition 🍎
+# MDP: Text-guided Image Editing by Manipulating Diffusion Path
 
-A lightweight, Apple Silicon–optimized diffusion-based image editing tool
-inspired by **MDP (Manipulating Diffusion Path)**.
+MDP focuses on editing images based on the text prompt without training another model. It utilizes the inherent capabilities of the diffusion model to synthesize images. The image synthesis process path can be altered based on the edit text prompt and it will generate the edited image.  
 
-Runs fully on **MPS (Metal Performance Shaders)** — no CUDA required.
+This repository contains extensive codebase for all 4 algorithms mentioned in the original research paper. This repository is inspired from [MDP-Diffusion](https://github.com/QianWangX/MDP-Diffusion) ([arxiv](https://arxiv.org/abs/2303.16765)) implementation. The original repository only contains code for single algorithm mentioned in paper. We have implemented all 4 algorithms mdp_epsilon, mdp_condition, mdp_x, and mdp_beta. We have also included gradio application scripts to try out the technique to edit real as well as synthetic images.  
 
----
 
-## What is MDP?
+## Run in a Free GPU powered Gradient Notebook
 
-MDP intercepts the diffusion denoising process at selected timesteps and
-**blends the noise predictions** between two prompts — the original and the
-edit target. This steers the generated image toward the edit without requiring
-full retraining.
+[![Gradient](https://assets.paperspace.io/img/gradient-badge.svg)](https://console.paperspace.com/github/ashutosh1919/mdp-diffusion?machine=Free-GPU)
 
-Two modes are supported:
-- **epsilon mode**: blend predicted noise ε directly (fast, global edits)
-- **x mode**: blend in predicted image space x₀ (structure-preserving edits)
 
----
+## Setup
 
-## Features
+The file `installations.sh` contains all the necessary code to install required dependencies. This method doesn't require any training but the inference will be very costly and time consuming on CPU since diffusion models are too heavy. Thus, it is good to have CUDA support. Also, you may require different version of `torch` based on the version of CUDA. If you are running this on [Paperspace](https://www.paperspace.com/), then the default version of CUDA is 11.6 which is compatible with this code. If you are running it somewhere else, please check your CUDA version using `nvcc --version`. If the version differs from ours, you may want to change versions of PyTorch libraries in the first line of `installations.sh` by looking at [compatibility table](https://github.com/pytorch/pytorch/wiki/PyTorch-Versions).
 
-- 🖼 Upload any image (auto-resized to 256×256)
-- ✏️ Enter an edit prompt and optional original prompt
-- 🎛 Choose MDP mode: `epsilon` or `x`
-- 📐 Control which timestep range gets MDP treatment
-- 🌊 View intermediate denoising steps as a gallery
-- 🔒 Reproducible results via seed control
-- ⚡️ Text embedding + latent caching for speed
-- 🍎 Pure MPS / CPU — no CUDA dependency
-
----
-
-## Installation
+To install all the dependencies, run below command:
 
 ```bash
-# 1. Create a virtual environment (recommended)
-python3.10 -m venv venv
-source venv/bin/activate
-
-# 2. Install PyTorch with MPS support
-# Visit https://pytorch.org for the latest Mac install command
-# Example:
-pip install torch torchvision
-
-# 3. Install all other dependencies
-pip install -r requirements.txt
+bash installations.sh
 ```
 
-> **Note:** First run downloads Stable Diffusion v1.5 (~4 GB) from HuggingFace.
-> It is cached in `~/.cache/huggingface/` for subsequent runs.
 
----
+## Running Gradio Demo
 
-## Usage
+MDP doesn't require any training. It uses stable diffusion model and changes the reverse diffusion path based on the edit text prompt. Thus, it enables synthesizing the edited image. We have implemented all 4 algorithms mentioned in the paper and prepared two types of gradio demos to try out the model.
 
+### Real-Image Editing
+
+As part of this demo, you can edit any image based on text prompt. With this, you can input any image, edit text prompt, select algorithm that you want to apply for editing and change algorithm parameters. The gradio app will run the specified algorithm by taking provided inputs with specified parameters and will generate edited image.  
+
+To run this gradio app, run below command:
 ```bash
-# From the project root:
-python app.py
+gradio app_real_image_editing.py
 ```
 
-The app opens automatically at `http://127.0.0.1:7860`.
+Once you run the above command, gradio app will generate a link which you can open to launch app. Below GIF shows the how you can interact with the app.
 
----
+![](./images/real_image_editing.gif)
 
-## Project Structure
+### Synthetic-Image Editing
 
-```
-mdp_playground/
-│
-├── app.py              ← Gradio UI entry point
-├── main.py             ← Pipeline orchestrator
-├── requirements.txt
-│
-├── mdp/
-│   ├── __init__.py
-│   ├── base.py         ← Abstract MDP strategy
-│   ├── mdp_epsilon.py  ← Epsilon-space editing
-│   └── mdp_x.py        ← X0-space editing
-│
-├── sampler/
-│   ├── __init__.py
-│   └── img2img.py      ← Core DDIM + MDP loop
-│
-└── utils/
-    ├── __init__.py
-    ├── device.py        ← MPS/CPU detection
-    ├── image.py         ← Tensor ↔ PIL helpers
-    └── caching.py       ← Embedding & latent cache
+As part of this demo, you can first generate image using text prompt and then you can edit that image using another text prompt. With this, you can input initial text prompt to generate image, edit text prompt, select algorithm that you want to apply for editing and change algorithm parameters. The gradio app will run the specified algorithm by taking provided inputs with specified parameters and will generate edited image.  
+
+To run this gradio app, run below command:
+```bash
+gradio app_synthetic_image_editing.py
 ```
 
----
+Once you run the above command, gradio app will generate a link which you can open to launch app. Below GIF shows the how you can interact with the app.
 
-## Parameters Guide
+![](./images/synthetic_image_editing.gif)
 
-| Parameter | Description | Range |
-|-----------|-------------|-------|
-| **Edit Prompt** | Describe the desired edit | text |
-| **Original Prompt** | Describe the source image (optional) | text |
-| **MDP Mode** | `epsilon` = noise space, `x` = image space | dropdown |
-| **Alpha** | How strongly to apply the edit (0=original, 1=full edit) | 0.0–1.0 |
-| **MDP Start Step** | First denoising step to apply MDP | 0–19 |
-| **MDP End Step** | Last denoising step to apply MDP | 0–19 |
-| **Inference Steps** | Total DDIM steps (more = slower but better) | 5–20 |
-| **Guidance Scale** | CFG scale (higher = more prompt-aligned) | 1.0–15.0 |
-| **Noise Strength** | How much noise to add (lower = closer to original) | 0.1–1.0 |
-| **Seed** | Integer for reproducible outputs | integer |
 
----
+## Reference
 
-## Tips
+MDP: A Generalized Framework for Text-Guided Image Editing by Manipulating the Diffusion Path -- https://arxiv.org/abs/2303.16765
 
-- Start with **epsilon** mode and `alpha=1.0` for straightforward edits.
-- Use **x mode** to preserve more of the original structure.
-- Lower `strength` (0.5–0.7) to keep more of the original image.
-- Apply MDP only in the **middle timesteps** (e.g. start=3, end=12) for
-  balanced results — early steps set global structure, late steps add detail.
-- Increase `guidance_scale` (8–12) for stronger adherence to the edit prompt.
+```
+@misc{wang2023mdp,
+      title={MDP: A Generalized Framework for Text-Guided Image Editing by Manipulating the Diffusion Path}, 
+      author={Qian Wang and Biao Zhang and Michael Birsak and Peter Wonka},
+      year={2023},
+      eprint={2303.16765},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
+}
+```
 
----
-
-## Performance
-
-On Apple M1/M2/M3:
-- ~30–90 seconds per generation (256×256, 15 steps)
-- First run is slower due to model compilation on MPS
-- Subsequent edits on the same image are faster (latent cache)
-
----
 
 ## License
 
-MIT License. Model weights are subject to their original licenses.
-Stable Diffusion v1.5: CreativeML Open RAIL-M License.
+See the [LICENSE](LICENSE) file.
