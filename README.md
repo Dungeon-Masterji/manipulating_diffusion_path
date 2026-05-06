@@ -68,6 +68,3 @@ MDP: A Generalized Framework for Text-Guided Image Editing by Manipulating the D
 ```
 
 
-## License
-
-See the [LICENSE](LICENSE) file.
